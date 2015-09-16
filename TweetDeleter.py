@@ -11,11 +11,9 @@ delete_favs = True
 days_to_keep = 7
  
 tweets_to_save = [
-    573245340398170114, # keybase proof
-    573395137637662721, # a tweet to this very post
 ]
+
 favs_to_save = [
-    362469775730946048, # tony this is icac
 ]
  
 # auth and api
