@@ -4,11 +4,13 @@ import tweepy
 from datetime import datetime, timedelta
  
 ## OPTIONS
-test_mode = False # Setting this to False will actually undertake the actions
-verbose = False
+test_mode = True # Setting this to False will actually undertake the actions
+verbose = True
 delete_tweets = True # Do we want to delete tweets?
 delete_favs = True # Do we want to delete favorites
-days_to_keep = 7 # How many days tweets to keep?
+max_favs = 4 # Don't delete a tweet if it has more than this number of favorites
+max_rts = 4 # Don't delete a tweet if it has more than this number of retweets
+days_to_keep = 2 # How many days tweets to keep?
 
 # Enter IDs of tweets you want to preserve here
 tweets_to_save = [
@@ -18,6 +20,12 @@ tweets_to_save = [
 favs_to_save = [
 ]
  
+# Enter strings that if found, will result in the tweet not being deleted.
+strings_to_save = [
+    "[nd]",
+    "New Blog Post:",
+]
+
 # Fill in the keys for your Twitter app
 consumer_key = 'XXXXXXXX'
 consumer_secret = 'XXXXXXXX'
@@ -32,7 +40,15 @@ api = tweepy.API(auth)
  
 # Set cut off date for deleting tweets and use UTC to match Twitter
 cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
- 
+
+# Function to check text for strings to save
+def checkKeep( tweetText ):
+    for string in strings_to_save:
+        if tweetText.find(string):
+	    return True
+
+    return False
+
 # If selected, delete old tweets
 if delete_tweets:
     # Pull in all tweets from the users timeline
@@ -43,7 +59,12 @@ if delete_tweets:
  
     for tweet in timeline:
         # Where tweets are not in save list and older than cutoff date
-        if tweet.id not in tweets_to_save and tweet.created_at < cutoff_date:
+	if (    tweet.id not in tweets_to_save
+            and tweet.created_at < cutoff_date
+            and not checkKeep(tweet.text)
+            and tweet.favorite_count < max_favs
+            and tweet.retweet_count < max_rts
+           ):
 	    # Are we being chatty?
             if verbose:
                 print "Deleting %d: [%s] %s" % (tweet.id, tweet.created_at, tweet.text)
@@ -74,7 +95,7 @@ if delete_favs:
                 print "Unfavoring %d: [%s] %s" % (tweet.id, tweet.created_at, tweet.text)
             if not test_mode:
                 api.destroy_favorite(tweet.id)
-           unfav_count += 1
+            unfav_count += 1
         else:
             kept_count += 1
 
