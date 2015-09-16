@@ -44,7 +44,8 @@ cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
 # Function to check text for strings to save
 def checkKeep( tweetText ):
     for string in strings_to_save:
-        if tweetText.find(string):
+        if tweetText.find(string) > -1:
+	    print "Found" + str(string) + " in " + str(tweetText)
 	    return True
 
     return False
